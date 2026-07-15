@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B站广告账户管理器</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 顶部导航栏 -->
+    <header class="app-header">
+      <div class="header-left">
+        <h1 class="app-title">
+          <svg class="bilibili-icon" viewBox="0 0 24 24" width="28" height="28">
+            <rect x="3" y="3" width="18" height="18" rx="4" fill="#FB7299"/>
+            <text x="12" y="16.5" text-anchor="middle" font-size="10" font-weight="bold" fill="white">B</text>
+          </svg>
+          <span class="title-text">B站广告账户管理器<small class="title-by">by 吕归尘</small></span>
+        </h1>
+        <span class="account-count" id="accountCount" style="background:#FFF0F4;color:#FB7299;">共 0 个账户</span>
+        <span class="account-count account-count-active" id="activeCount" style="background:#E8F8E8;color:#27AE60;margin-left:8px;">0 投放中</span>
+        <span class="account-count account-count-ended" id="endedCount" style="background:#F5F5F5;color:#999;margin-left:6px;">0 已暂停</span>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-outline" id="btnRefresh" title="刷新数据">
+          <svg viewBox="0 0 20 20" width="16" height="16">
+            <path d="M10 3a7 7 0 017 7h-3l4 4 4-4h-3a9 9 0 10-9 9v-2a7 7 0 010-14z" fill="currentColor"/>
+          </svg>
+        </button>
+        <button class="btn btn-primary" id="btnAddAccount">
+          <svg viewBox="0 0 20 20" width="16" height="16">
+            <line x1="10" y1="3" x2="10" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          添加账户
+        </button>
+        <button class="btn btn-outline" id="btnExport">
+          <svg viewBox="0 0 20 20" width="16" height="16">
+            <path d="M13 8V2H7v6H3l7 7 7-7h-4zM3 18h14v-2H3v2z" fill="currentColor"/>
+          </svg>
+          导出
+        </button>
+        <button class="btn btn-outline" id="btnImport">
+          <svg viewBox="0 0 20 20" width="16" height="16">
+            <path d="M7 8V2h6v6h4l-7 7-7-7h4zm0 10v-2H3v2h14v-2h-4v2H7z" fill="currentColor"/>
+          </svg>
+          导入
+        </button>
+        <button class="btn btn-sm btn-outline" id="btnDownloadTemplate" title="下载导入模板">
+          <svg viewBox="0 0 20 20" width="14" height="14">
+            <path d="M13 8V2H7v6H3l7 7 7-7h-4zM3 18h14v-2H3v2z" fill="currentColor"/>
+          </svg>
+          模板
+        </button>
+        <button class="btn btn-sm btn-outline" id="btnSnapshotBackup" title="创建快照备份">
+          <svg viewBox="0 0 20 20" width="14" height="14">
+            <path d="M4 4h3l2-2h5l2 2h3v12H4V4zm2 2v8h11V6h-3l-2-2H8L6 6H6z" fill="currentColor"/>
+          </svg>
+          备份
+        </button>
+        <button class="btn btn-sm btn-outline" id="btnRestoreBackup" title="从备份恢复">
+          <svg viewBox="0 0 20 20" width="14" height="14">
+            <path d="M10 3a7 7 0 00-7 7h3l-4 4-4-4h3a9 9 0 119 9v-2a7 7 0 000-14z" fill="currentColor"/>
+          </svg>
+          恢复
+        </button>
+      </div>
+    </header>
+
+    <!-- 搜索过滤栏 -->
+    <div class="toolbar">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18">
+          <circle cx="10.5" cy="10.5" r="6.5" stroke="#999" stroke-width="2" fill="none"/>
+          <line x1="15.5" y1="15.5" x2="21" y2="21" stroke="#999" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="搜索产品名、账户ID、账户名..." class="search-input">
+      </div>
+      <div class="filter-group">
+        <select id="filterStatus" class="filter-select">
+          <option value="all">全部状态</option>
+          <option value="active">投放中</option>
+          <option value="ended">已暂停</option>
+        </select>
+      </div>
+      <div class="active-ids-wrapper">
+        <span class="active-ids-label">在投账户ID</span>
+        <input type="text" id="activeIdsBox" class="active-ids-input" readonly onclick="copyToClipboard(this.value, '在投账户ID')" title="点击复制">
+      </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="table-container">
+      <table class="data-table" id="accountTable">
+        <thead>
+          <tr>
+            <th style="width: 50px;">#</th>
+            <th style="width: 160px;">产品名</th>
+            <th style="width: 160px;">账户ID</th>
+            <th style="width: 160px;">账户名</th>
+            <th style="width: 190px;">往期投放</th>
+            <th style="width: 130px;">投放开始</th>
+            <th style="width: 130px;">投放暂停</th>
+            <th style="width: 100px;">状态</th>
+            <th style="width: 160px;">备注</th>
+            <th style="width: 120px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- 动态渲染 -->
+        </tbody>
+      </table>
+
+      <!-- 空状态 -->
+      <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 80 80" width="80" height="80">
+          <rect x="15" y="20" width="50" height="45" rx="4" stroke="#ccc" stroke-width="2" fill="none"/>
+          <line x1="25" y1="35" x2="55" y2="35" stroke="#eee" stroke-width="2" stroke-linecap="round"/>
+          <line x1="25" y1="43" x2="50" y2="43" stroke="#eee" stroke-width="2" stroke-linecap="round"/>
+          <line x1="25" y1="51" x2="45" y2="51" stroke="#eee" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="60" cy="25" r="10" fill="#FB7299"/>
+          <line x1="56" y1="25" x2="64" y2="25" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="60" y1="21" x2="60" y2="29" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <p class="empty-title">还没有账户数据</p>
+        <p class="empty-desc">点击"添加账户"开始管理你的B站广告账户</p>
+      </div>
+    </div>
+
+    <!-- 底部状态栏 -->
+    <footer class="status-bar">
+      <span id="statusText">就绪</span>
+    </footer>
+  </div>
+
+  <!-- 添加/编辑账户的模态框 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="accountModal">
+      <div class="modal-header">
+        <h2 id="modalTitle">添加账户</h2>
+        <button class="modal-close" id="btnModalClose">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <form class="modal-body" id="accountForm">
+        <input type="hidden" id="editAccountId">
+
+        <div class="form-group">
+          <label for="productName">产品名 <span class="required">*</span></label>
+          <div class="product-input-wrapper" id="productInputWrapper">
+            <input type="text" id="productName" placeholder="输入或选择已有产品" required maxlength="50" autocomplete="off">
+            <div class="product-dropdown" id="productDropdown"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="accountId">账户ID <span class="required">*</span></label>
+            <input type="text" id="accountId" placeholder="B站广告账户ID" required maxlength="30">
+          </div>
+          <div class="form-group">
+            <label for="accountName">账户名 <span class="required">*</span></label>
+            <input type="text" id="accountName" placeholder="账户名称" required maxlength="50">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startDate">投放开始</label>
+            <div class="date-picker-wrapper" id="startDatePicker">
+              <input type="text" class="date-display" id="startDateDisplay" placeholder="点击选择日期" readonly>
+              <input type="hidden" id="startDate">
+              <button type="button" class="date-trigger" id="startDateTrigger" tabindex="-1">
+                <svg viewBox="0 0 20 20" width="18" height="18">
+                  <rect x="3" y="3" width="14" height="15" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                  <line x1="3" y1="8" x2="17" y2="8" stroke="currentColor" stroke-width="1.5"/>
+                  <line x1="7" y1="1" x2="7" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="13" y1="1" x2="13" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <div class="calendar-popup" id="startDateCalendar"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="pauseDate">投放暂停</label>
+            <div class="date-picker-wrapper" id="pauseDatePicker">
+              <input type="text" class="date-display" id="pauseDateDisplay" placeholder="点击选择日期" readonly>
+              <input type="hidden" id="pauseDate">
+              <button type="button" class="date-trigger" id="pauseDateTrigger" tabindex="-1">
+                <svg viewBox="0 0 20 20" width="18" height="18">
+                  <rect x="3" y="3" width="14" height="15" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                  <line x1="3" y1="8" x2="17" y2="8" stroke="currentColor" stroke-width="1.5"/>
+                  <line x1="7" y1="1" x2="7" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="13" y1="1" x2="13" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button type="button" class="date-clear" id="pauseDateClear" title="清除日期" tabindex="-1" style="display:none;">
+                <svg viewBox="0 0 16 16" width="14" height="14">
+                  <circle cx="8" cy="8" r="7" fill="#ccc"/>
+                  <line x1="5" y1="5" x2="11" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="11" y1="5" x2="5" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <div class="calendar-popup" id="pauseDateCalendar"></div>
+            </div>
+            <span class="form-hint">留空表示持续投放中；开始和暂停都留空则状态为已暂停</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="pastPeriods">往期投放</label>
+          <input type="text" id="pastPeriods" placeholder="例如：260101-260202; 260301-260415" maxlength="500">
+          <span class="form-hint">格式：YYMMDD-YYMMDD，多个时段用英文分号 ; 或换行隔开</span>
+        </div>
+
+        <div class="form-group">
+          <label for="remarks">备注</label>
+          <textarea id="remarks" placeholder="运营备注、投放策略等（可选）" maxlength="200" rows="2"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="btnCancel">取消</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 删除确认对话框 -->
+  <div class="modal-overlay" id="confirmOverlay">
+    <div class="modal modal-small" id="confirmDialog">
+      <div class="modal-header">
+        <h2>确认删除</h2>
+      </div>
+      <div class="modal-body">
+        <p class="confirm-text" id="confirmText">确定要删除该账户吗？此操作不可恢复。</p>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="btnConfirmCancel">取消</button>
+          <button type="button" class="btn btn-danger" id="btnConfirmDelete">删除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 通知 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

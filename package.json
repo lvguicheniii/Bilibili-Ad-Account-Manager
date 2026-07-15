@@ -1,0 +1,12 @@
+{
+  "name": "baam",
+  "version": "1.0.0",
+  "description": "B站广告账户管理器 · Bilibili Ad Account Manager (BAAM)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "author": "吕归尘",
+  "license": "MIT"
+}
