@@ -6,6 +6,8 @@
 
 ![BAAM](baamlogo.png)
 
+![BAAM](BAAM首页.png)
+
 ---
 
 ## ✨ 功能特性
